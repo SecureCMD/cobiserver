@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create account · KOReader Sync</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+	<h1>Create account</h1>
+	<p class="sub">This username and password are what you'll enter in KOReader's sync settings.</p>
+	<div class="card">
+		{{if .Error}}<div class="msg error">{{.Error}}</div>{{end}}
+		<form method="post" action="/account/register">
+			<label for="username">Username</label>
+			<input type="text" id="username" name="username" autocomplete="username" required minlength="3" maxlength="64" pattern="[a-zA-Z0-9._-]+">
+			<label for="email">Email (optional, used only for password recovery)</label>
+			<input type="email" id="email" name="email" autocomplete="email">
+			<label for="password">Password</label>
+			<input type="password" id="password" name="password" autocomplete="new-password" required minlength="4">
+			<label for="password2">Confirm password</label>
+			<input type="password" id="password2" name="password2" autocomplete="new-password" required minlength="4">
+			<button type="submit">Create account</button>
+		</form>
+		<div class="links"><a href="/account/login">Already have an account? Sign in</a></div>
+	</div>
+</div>
+</body>
+</html>

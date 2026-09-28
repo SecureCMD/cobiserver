@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Users · Admin · KOReader Sync</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap wide">
+	<div class="row">
+		<h1>Users</h1>
+		<a class="btn secondary" href="/account">Back to account</a>
+	</div>
+	{{if .Error}}<div class="msg error">{{.Error}}</div>{{end}}
+	{{if .Info}}<div class="msg ok">{{.Info}}</div>{{end}}
+
+	<div class="card">
+		<table>
+			<tr><th>Username</th><th>Email</th><th>Admin</th><th>Created</th><th></th></tr>
+			{{range .Users}}
+			<tr>
+				<td>{{.Username}}</td>
+				<td>{{.Email}}</td>
+				<td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
+				<td>{{.CreatedAt.Format "2006-01-02"}}</td>
+				<td>
+					<form class="inline" method="post" action="/admin/users/reset-password">
+						<input type="hidden" name="username" value="{{.Username}}">
+						<button type="submit" class="secondary">Reset password</button>
+					</form>
+					<form class="inline" method="post" action="/admin/users/delete" onsubmit="return confirm('Delete user {{.Username}}?');">
+						<input type="hidden" name="username" value="{{.Username}}">
+						<button type="submit" class="secondary">Delete</button>
+					</form>
+				</td>
+			</tr>
+			{{end}}
+		</table>
+	</div>
+
+	<div class="card">
+		<h2>Create user</h2>
+		<form method="post" action="/admin/users/create">
+			<label for="username">Username</label>
+			<input type="text" id="username" name="username" required minlength="3" maxlength="64" pattern="[a-zA-Z0-9._-]+">
+			<label for="password">Password</label>
+			<input type="password" id="password" name="password" required minlength="4">
+			<label for="email">Email (optional)</label>
+			<input type="email" id="email" name="email">
+			<label><input type="checkbox" name="is_admin" value="1" style="width:auto;display:inline-block;"> Admin</label>
+			<button type="submit">Create user</button>
+		</form>
+	</div>
+</div>
+</body>
+</html>

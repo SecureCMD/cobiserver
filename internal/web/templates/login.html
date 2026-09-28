@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · KOReader Sync</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+	<h1>KOReader Sync Server</h1>
+	<p class="sub">Sign in to manage your account.</p>
+	<div class="card">
+		{{if .Error}}<div class="msg error">{{.Error}}</div>{{end}}
+		{{if .Info}}<div class="msg ok">{{.Info}}</div>{{end}}
+		<form method="post" action="/account/login">
+			<label for="username">Username</label>
+			<input type="text" id="username" name="username" autocomplete="username" required>
+			<label for="password">Password</label>
+			<input type="password" id="password" name="password" autocomplete="current-password" required>
+			<button type="submit">Sign in</button>
+		</form>
+		<div class="links">
+			<a href="/account/forgot-password">Forgot your password?</a>
+			{{if .AllowSignup}}<a href="/account/register">Create an account</a>{{end}}
+		</div>
+	</div>
+</div>
+</body>
+</html>

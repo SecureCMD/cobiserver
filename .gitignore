@@ -1,0 +1,6 @@
+/koserver
+/data/
+*.db
+*.db-shm
+*.db-wal
+.env

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account · KOReader Sync</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap wide">
+	<div class="row">
+		<h1>Hi, {{.User.Username}}</h1>
+		<form method="post" action="/account/logout"><button type="submit" class="secondary">Log out</button></form>
+	</div>
+	<p class="sub">Server URL to enter in KOReader: <code>{{.BaseURL}}</code></p>
+
+	<div class="card">
+		<h2>Account</h2>
+		<p class="sub">Email: {{if .User.Email}}{{.User.Email}}{{else}}not set{{end}}{{if .User.IsAdmin}} &middot; admin{{end}}</p>
+		<div class="row">
+			<a class="btn secondary" href="/account/change-password">Change password</a>
+			<a class="btn secondary" href="/account/change-email">Set recovery email</a>
+			{{if .User.IsAdmin}}<a class="btn secondary" href="/admin/users">Manage users</a>{{end}}
+		</div>
+	</div>
+
+	<div class="card">
+		<h2>Synced documents</h2>
+		{{if .Progress}}
+		<table>
+			<tr><th>Document</th><th>Progress</th><th>Device</th><th>Updated</th></tr>
+			{{range .Progress}}
+			<tr>
+				<td><code>{{.Document}}</code></td>
+				<td>{{printf "%.1f" .Percentage}}%</td>
+				<td>{{.Device}}</td>
+				<td>{{.UpdatedAt.Format "2006-01-02 15:04"}}</td>
+			</tr>
+			{{end}}
+		</table>
+		{{else}}
+		<p class="sub">No documents synced yet.</p>
+		{{end}}
+	</div>
+</div>
+</body>
+</html>
