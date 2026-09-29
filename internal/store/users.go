@@ -59,7 +59,7 @@ func (s *Store) CreateUser(username, md5hex, email string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.db.Exec(
+	res, err := s.write.Exec(
 		`INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)`,
 		username, email, hash,
 	)
@@ -78,7 +78,7 @@ func (s *Store) CreateUser(username, md5hex, email string) (*User, error) {
 	// app's own "Register" button, the web UI, or the CLI, so there is
 	// always a way into /admin/users without touching the database.
 	if n, err := s.CountUsers(); err == nil && n == 1 {
-		_, _ = s.db.Exec(`UPDATE users SET is_admin = 1 WHERE id = ?`, id)
+		_, _ = s.write.Exec(`UPDATE users SET is_admin = 1 WHERE id = ?`, id)
 	}
 	return s.GetUserByID(id)
 }
@@ -103,12 +103,12 @@ func scanUser(row interface {
 }
 
 func (s *Store) GetUserByID(id int64) (*User, error) {
-	row := s.db.QueryRow(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users WHERE id = ?`, id)
+	row := s.read.QueryRow(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users WHERE id = ?`, id)
 	return scanUser(row)
 }
 
 func (s *Store) GetUserByUsername(username string) (*User, error) {
-	row := s.db.QueryRow(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users WHERE username = ?`, username)
+	row := s.read.QueryRow(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users WHERE username = ?`, username)
 	return scanUser(row)
 }
 
@@ -116,7 +116,7 @@ func (s *Store) GetUserByEmail(email string) (*User, error) {
 	if email == "" {
 		return nil, ErrNotFound
 	}
-	row := s.db.QueryRow(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users WHERE email = ?`, email)
+	row := s.read.QueryRow(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users WHERE email = ?`, email)
 	return scanUser(row)
 }
 
@@ -141,12 +141,12 @@ func (s *Store) SetPasswordMD5(userID int64, md5hex string) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.db.Exec(`UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, hash, userID)
+	_, err = s.write.Exec(`UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, hash, userID)
 	return err
 }
 
 func (s *Store) SetEmail(userID int64, email string) error {
-	_, err := s.db.Exec(`UPDATE users SET email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, email, userID)
+	_, err := s.write.Exec(`UPDATE users SET email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, email, userID)
 	return err
 }
 
@@ -155,7 +155,7 @@ func (s *Store) SetAdmin(username string, admin bool) error {
 	if admin {
 		v = 1
 	}
-	res, err := s.db.Exec(`UPDATE users SET is_admin = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?`, v, username)
+	res, err := s.write.Exec(`UPDATE users SET is_admin = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?`, v, username)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (s *Store) SetAdmin(username string, admin bool) error {
 }
 
 func (s *Store) DeleteUser(username string) error {
-	res, err := s.db.Exec(`DELETE FROM users WHERE username = ?`, username)
+	res, err := s.write.Exec(`DELETE FROM users WHERE username = ?`, username)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (s *Store) DeleteUser(username string) error {
 }
 
 func (s *Store) ListUsers() ([]User, error) {
-	rows, err := s.db.Query(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users ORDER BY username`)
+	rows, err := s.read.Query(`SELECT id, username, email, password_hash, is_admin, created_at, updated_at FROM users ORDER BY username`)
 	if err != nil {
 		return nil, err
 	}
@@ -197,6 +197,6 @@ func (s *Store) ListUsers() ([]User, error) {
 
 func (s *Store) CountUsers() (int, error) {
 	var n int
-	err := s.db.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&n)
+	err := s.read.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&n)
 	return n, err
 }

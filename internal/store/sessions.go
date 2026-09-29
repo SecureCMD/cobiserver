@@ -20,7 +20,7 @@ func (s *Store) CreateSession(userID int64, ttl time.Duration) (string, error) {
 		return "", err
 	}
 	expires := now().Add(ttl)
-	_, err = s.db.Exec(`INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)`, id, userID, expires)
+	_, err = s.write.Exec(`INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)`, id, userID, expires)
 	if err != nil {
 		return "", err
 	}
@@ -28,7 +28,7 @@ func (s *Store) CreateSession(userID int64, ttl time.Duration) (string, error) {
 }
 
 func (s *Store) GetSession(id string) (*Session, error) {
-	row := s.db.QueryRow(`SELECT id, user_id, expires_at FROM sessions WHERE id = ?`, id)
+	row := s.read.QueryRow(`SELECT id, user_id, expires_at FROM sessions WHERE id = ?`, id)
 	var sess Session
 	if err := row.Scan(&sess.ID, &sess.UserID, &sess.ExpiresAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -44,16 +44,16 @@ func (s *Store) GetSession(id string) (*Session, error) {
 }
 
 func (s *Store) DeleteSession(id string) error {
-	_, err := s.db.Exec(`DELETE FROM sessions WHERE id = ?`, id)
+	_, err := s.write.Exec(`DELETE FROM sessions WHERE id = ?`, id)
 	return err
 }
 
 func (s *Store) DeleteSessionsForUser(userID int64) error {
-	_, err := s.db.Exec(`DELETE FROM sessions WHERE user_id = ?`, userID)
+	_, err := s.write.Exec(`DELETE FROM sessions WHERE user_id = ?`, userID)
 	return err
 }
 
 func (s *Store) CleanupExpiredSessions() error {
-	_, err := s.db.Exec(`DELETE FROM sessions WHERE expires_at < ?`, now())
+	_, err := s.write.Exec(`DELETE FROM sessions WHERE expires_at < ?`, now())
 	return err
 }

@@ -17,7 +17,7 @@ type Progress struct {
 }
 
 func (s *Store) UpsertProgress(userID int64, p Progress) error {
-	_, err := s.db.Exec(`
+	_, err := s.write.Exec(`
 		INSERT INTO progress (user_id, document, percentage, progress, device, device_id, metadata, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 		ON CONFLICT(user_id, document) DO UPDATE SET
@@ -32,7 +32,7 @@ func (s *Store) UpsertProgress(userID int64, p Progress) error {
 }
 
 func (s *Store) GetProgress(userID int64, document string) (*Progress, error) {
-	row := s.db.QueryRow(`
+	row := s.read.QueryRow(`
 		SELECT document, percentage, progress, device, device_id, metadata, updated_at
 		FROM progress WHERE user_id = ? AND document = ?
 	`, userID, document)
@@ -49,7 +49,7 @@ func (s *Store) GetProgress(userID int64, document string) (*Progress, error) {
 }
 
 func (s *Store) ListProgressForUser(userID int64) ([]Progress, error) {
-	rows, err := s.db.Query(`
+	rows, err := s.read.Query(`
 		SELECT document, percentage, progress, device, device_id, metadata, updated_at
 		FROM progress WHERE user_id = ? ORDER BY updated_at DESC
 	`, userID)

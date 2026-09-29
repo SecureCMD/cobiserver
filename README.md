@@ -62,6 +62,7 @@ and `.env.example`):
 | `LISTEN_ADDR` | `:8080` | Address/port the HTTP server binds to |
 | `DATA_DIR` | `/data` | Directory for the SQLite database |
 | `DB_PATH` | `$DATA_DIR/koserver.db` | Full DB file path override |
+| `DB_MAX_READ_CONNS` | `10` | Size of the concurrent-read connection pool (see "On concurrency" below) |
 | `BASE_URL` | `http://localhost:8080` | Public URL, used to build reset links |
 | `ALLOW_SIGNUP` | `true` | Allow new accounts via the app or `/account/register` |
 | `COOKIE_SECURE` | `false` | Set `true` once served over HTTPS |
@@ -144,6 +145,25 @@ go build -o koserver ./cmd/koserver
 ```
 
 Or just build the Docker image directly with `docker build -t koserver .`.
+
+## On concurrency (SQLite)
+
+Storage is SQLite in WAL mode, accessed through two separate connection
+pools: a single connection for all writes, and a small pool (`DB_MAX_READ_CONNS`,
+default 10) for reads. SQLite only ever allows one writer at a time
+regardless of pooling, so funneling writes through one connection avoids
+`SQLITE_BUSY` outright instead of retrying on lock contention, while WAL
+lets reads run fully concurrently with that writer. Each sync request is a
+single-row upsert or lookup, so this comfortably handles concurrent syncing
+from hundreds of users on a single small VM.
+
+This will not scale past a single process/host (no read replicas, no
+multi-writer), and a SQLite file on a networked/clustered filesystem is
+unsafe — keep `$DATA_DIR` on local disk. If you outgrow this (running
+multiple replicas, or genuinely high write volume from many simultaneous
+users), swapping `internal/store` for Postgres is the natural next step;
+the package already isolates all SQL behind `database/sql`, so it's a
+driver + query-syntax change, not a rewrite.
 
 ## Data & backups
 

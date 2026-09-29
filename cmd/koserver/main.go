@@ -71,7 +71,7 @@ Configuration is read from environment variables; see README.md.`)
 
 func openStore() *store.Store {
 	cfg := config.Load()
-	s, err := store.Open(cfg.DBPath)
+	s, err := store.Open(cfg.DBPath, cfg.DBMaxReadConns)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "open store:", err)
 		os.Exit(1)
@@ -212,7 +212,7 @@ func runServe() {
 	cfg := config.Load()
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	s, err := store.Open(cfg.DBPath)
+	s, err := store.Open(cfg.DBPath, cfg.DBMaxReadConns)
 	if err != nil {
 		logger.Error("open store", "err", err)
 		os.Exit(1)

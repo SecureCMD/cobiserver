@@ -21,31 +21,62 @@ var (
 	ErrInvalidInput = errors.New("invalid input")
 )
 
+// Store holds two separate *sql.DB handles onto the same SQLite file: one
+// restricted to a single connection for all writes, and one with a small
+// pool for concurrent reads. SQLite allows only one writer at a time no
+// matter how many connections you open, so funneling every write through
+// a single connection avoids SQLITE_BUSY entirely instead of relying on
+// busy_timeout retries; WAL mode then lets reads proceed concurrently
+// with that writer without blocking on it.
 type Store struct {
-	db *sql.DB
+	write *sql.DB
+	read  *sql.DB
 }
 
-func Open(dbPath string) (*Store, error) {
+// DefaultMaxReadConns is used when maxReadConns <= 0 is passed to Open.
+const DefaultMaxReadConns = 10
+
+func Open(dbPath string, maxReadConns int) (*Store, error) {
 	if dir := filepath.Dir(dbPath); dir != "." {
 		if err := os.MkdirAll(dir, 0o750); err != nil {
 			return nil, fmt.Errorf("create data dir: %w", err)
 		}
 	}
+	if maxReadConns <= 0 {
+		maxReadConns = DefaultMaxReadConns
+	}
 	dsn := dbPath + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(ON)"
-	db, err := sql.Open("sqlite", dsn)
+
+	write, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
-	db.SetMaxOpenConns(1) // modernc.org/sqlite + WAL: keep it simple and avoid lock contention
-	s := &Store{db: db}
+	write.SetMaxOpenConns(1)
+
+	read, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		write.Close()
+		return nil, err
+	}
+	read.SetMaxOpenConns(maxReadConns)
+
+	s := &Store{write: write, read: read}
 	if err := s.migrate(); err != nil {
-		db.Close()
+		write.Close()
+		read.Close()
 		return nil, err
 	}
 	return s, nil
 }
 
-func (s *Store) Close() error { return s.db.Close() }
+func (s *Store) Close() error {
+	errW := s.write.Close()
+	errR := s.read.Close()
+	if errW != nil {
+		return errW
+	}
+	return errR
+}
 
 func (s *Store) migrate() error {
 	stmts := []string{
@@ -89,7 +120,7 @@ func (s *Store) migrate() error {
 		`CREATE INDEX IF NOT EXISTS idx_reset_user ON password_reset_tokens(user_id)`,
 	}
 	for _, stmt := range stmts {
-		if _, err := s.db.Exec(stmt); err != nil {
+		if _, err := s.write.Exec(stmt); err != nil {
 			return fmt.Errorf("migrate: %w: %s", err, stmt)
 		}
 	}
