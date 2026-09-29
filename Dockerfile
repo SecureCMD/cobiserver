@@ -3,9 +3,8 @@
 FROM golang:1.23-bookworm AS builder
 WORKDIR /src
 
-COPY go.mod go.sum ./
-RUN go mod download
-
+# Dependencies are vendored (vendor/, committed to the repo), so this
+# build never touches the network - no separate `go mod download` layer.
 COPY . .
 
 # TARGETOS/TARGETARCH/TARGETVARIANT are set automatically by BuildKit to
@@ -19,7 +18,7 @@ ARG TARGETVARIANT
 ARG VERSION=dev
 ARG COMMIT=none
 
-RUN GOARM=${TARGETVARIANT#v} CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+RUN GOFLAGS=-mod=vendor GOARM=${TARGETVARIANT#v} CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
 	go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
 	-o /out/koserver ./cmd/koserver
 

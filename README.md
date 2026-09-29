@@ -224,6 +224,12 @@ Requires Go 1.23+; no CGO, no external services needed (the SQLite driver
 is pure Go), which also means cross-compiling for any target just works —
 there's no C toolchain to cross-install.
 
+Dependencies are vendored (`vendor/`, committed to the repo, kept in
+sync with `go.mod`/`go.sum` via `go mod vendor`), and every build path
+here (`make build`/`dist`, the Dockerfile, `debian/rules`) builds with
+`-mod=vendor` — so none of them ever touch the network. Changed a
+dependency? Run `go mod tidy && go mod vendor` and commit the result.
+
 ```sh
 make help          # list every target
 make build          # build for the host's OS/arch, into bin/koserver

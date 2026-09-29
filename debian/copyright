@@ -3,15 +3,16 @@ Upstream-Name: koserver
 Upstream-Contact: NachE <nache.nache@gmail.com>
 Source: https://github.com/SecureCMD/cobiserver
 Comment:
- usr/bin/koserver is a statically linked Go binary (CGO_ENABLED=0). Besides
- this project's own code (below), it links the Go modules listed further
- down, none of which are vendored into this source package: they are
- fetched over the network at build time via `go mod download`/`go build`,
- pinned by go.sum, and their license terms apply to the portions of the
- binary they contribute. Import paths are given as Files: for
- identification, matching `go.sum` and the module list `go version -m
- usr/bin/koserver` reports; they do not refer to paths actually present in
- this source package.
+ vendor/ holds the Go dependencies this project builds against (`go mod
+ vendor`; see vendor/modules.txt for exact versions, matching go.sum).
+ `go mod vendor` vendors for every supported OS/architecture, so a few of
+ these (currently: github.com/hashicorp/golang-lru/v2,
+ github.com/mattn/go-isatty, github.com/ncruces/go-strftime,
+ modernc.org/gc/v3, modernc.org/strutil, modernc.org/token) are present
+ in vendor/ but do not end up compiled into usr/bin/koserver for any of
+ this package's actual build targets (linux/amd64, linux/arm64,
+ linux/arm) - confirmed via `go version -m` on the built binary. They're
+ still covered below since their source is present in this package.
 
 Files: *
 Copyright: 2026 Secure Code Metadynamics SL and Juan Antonio Nache Ramos
@@ -21,63 +22,96 @@ Files: debian/*
 Copyright: 2026 Secure Code Metadynamics SL and Juan Antonio Nache Ramos
 License: MIT
 
-Files: github.com/dustin/go-humanize
+Files: vendor/github.com/dustin/go-humanize/*
 Copyright: 2005-2008 Dustin Sallings <dustin@spy.net>
 License: MIT
-Comment: go.sum pins v1.0.1.
+Comment: v1.0.1.
 
-Files: github.com/google/uuid
+Files: vendor/github.com/google/uuid/*
 Copyright: 2009, 2014 Google Inc.
 License: BSD-3-Clause
-Comment: go.sum pins v1.6.0.
+Comment: v1.6.0.
 
-Files: github.com/remyoudompheng/bigfft
+Files: vendor/github.com/hashicorp/golang-lru/v2/*
+Copyright: 2014 HashiCorp, Inc.
+License: MPL-2.0
+Comment: v2.0.7. Not compiled into usr/bin/koserver for this package's targets.
+
+Files: vendor/github.com/mattn/go-isatty/*
+Copyright: Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
+License: MIT
+Comment: v0.0.20. Not compiled into usr/bin/koserver for this package's targets.
+
+Files: vendor/github.com/ncruces/go-strftime/*
+Copyright: 2022 Nuno Cruces
+License: MIT
+Comment: v0.1.9. Not compiled into usr/bin/koserver for this package's targets.
+
+Files: vendor/github.com/remyoudompheng/bigfft/*
 Copyright: 2012 The Go Authors.
 License: BSD-3-Clause
-Comment: go.sum pins v0.0.0-20230129092748-24d4a6f8daec.
+Comment: v0.0.0-20230129092748-24d4a6f8daec.
 
-Files: golang.org/x/crypto
+Files: vendor/golang.org/x/crypto/*
 Copyright: 2009 The Go Authors.
 License: BSD-3-Clause
-Comment: go.sum pins v0.31.0.
+Comment: v0.31.0.
 
-Files: golang.org/x/sys
+Files: vendor/golang.org/x/sys/*
 Copyright: 2009 The Go Authors.
 License: BSD-3-Clause
-Comment: go.sum pins v0.28.0.
+Comment: v0.28.0.
 
-Files: modernc.org/mathutil
+Files: vendor/modernc.org/gc/v3/*
+Copyright: 2016 The GC Authors.
+License: BSD-3-Clause
+Comment:
+ v3.0.0-20240107210532-573471604cb6. Not compiled into usr/bin/koserver
+ for this package's targets. Also embeds BSD-3-Clause-licensed code from
+ the Go standard library (Copyright 2009 The Go Authors); see its
+ LICENSE file.
+
+Files: vendor/modernc.org/mathutil/*
 Copyright: 2014 The mathutil Authors.
 License: BSD-3-Clause
-Comment: go.sum pins v1.6.0.
+Comment: v1.6.0.
 
-Files: modernc.org/memory
+Files: vendor/modernc.org/memory/*
 Copyright: 2017 The Memory Authors.
 License: BSD-3-Clause
 Comment:
- go.sum pins v1.8.0. This module's own LICENSE is BSD-3-Clause (above).
- It additionally embeds a BSD-3-Clause-licensed mmap helper adapted from
+ v1.8.0. This module's own LICENSE is BSD-3-Clause (above). It
+ additionally embeds a BSD-3-Clause-licensed mmap helper adapted from
  the Go standard library (Copyright 2009 The Go Authors) and from
  github.com/edsrzf/mmap-go (Copyright (c) 2011 Evan Shaw
  <edsrzf@gmail.com>); see its LICENSE-GO and LICENSE-MMAP-GO files.
 
-Files: modernc.org/libc
+Files: vendor/modernc.org/libc/*
 Copyright: 2017 The Libc Authors.
 License: BSD-3-Clause
 Comment:
- go.sum pins v1.55.3. This module's own LICENSE is BSD-3-Clause (above).
- It additionally embeds BSD-3-Clause-licensed code from the Go standard
+ v1.55.3. This module's own LICENSE is BSD-3-Clause (above). It
+ additionally embeds BSD-3-Clause-licensed code from the Go standard
  library (Copyright 2009 The Go Authors); see its LICENSE-GO file.
 
-Files: modernc.org/sqlite
+Files: vendor/modernc.org/sqlite/*
 Copyright: 2017 The Sqlite Authors.
 License: BSD-3-Clause
 Comment:
- go.sum pins v1.34.4. modernc.org/sqlite is a CGO-free transpilation of
- the public-domain SQLite C amalgamation
- (https://sqlite.org/copyright.html); the transpiled Go source carries
- this BSD-3-Clause license from its authors, on top of upstream SQLite's
- own public-domain status.
+ v1.34.4. modernc.org/sqlite is a CGO-free transpilation of the
+ public-domain SQLite C amalgamation (https://sqlite.org/copyright.html);
+ the transpiled Go source carries this BSD-3-Clause license from its
+ authors, on top of upstream SQLite's own public-domain status.
+
+Files: vendor/modernc.org/strutil/*
+Copyright: 2014 The strutil Authors.
+License: BSD-3-Clause
+Comment: v1.2.0. Not compiled into usr/bin/koserver for this package's targets.
+
+Files: vendor/modernc.org/token/*
+Copyright: 2009 The Go Authors.
+License: BSD-3-Clause
+Comment: v1.1.0. Not compiled into usr/bin/koserver for this package's targets.
 
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a
@@ -126,3 +160,13 @@ License: BSD-3-Clause
  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: MPL-2.0
+ This Source Code Form is subject to the terms of the Mozilla Public
+ License, v. 2.0. If a copy of the MPL was not distributed with this
+ file, you can obtain one at http://mozilla.org/MPL/2.0/.
+ .
+ The full license text is not reproduced here for length; on Debian
+ systems it is available at /usr/share/common-licenses/MPL-2.0, and
+ upstream at vendor/github.com/hashicorp/golang-lru/v2/LICENSE and
+ https://www.mozilla.org/en-US/MPL/2.0/.

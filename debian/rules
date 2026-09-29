@@ -1,12 +1,12 @@
 #!/usr/bin/make -f
 
 export CGO_ENABLED = 0
-# Go >=1.21 auto-fetches the toolchain go.mod asks for (GOTOOLCHAIN=auto)
-# if the system golang-go is older than go.mod's `go 1.23`, provided the
-# build has network access. For a fully offline/reproducible build (e.g.
-# sbuild without network), run `go mod vendor` first and add
-# GOFLAGS=-mod=vendor here.
-export GOFLAGS =
+# Dependencies are vendored (vendor/, committed), so the build never
+# touches the network; -mod=vendor makes that mandatory rather than an
+# implicit default. It does NOT help with the separate golang-go version
+# requirement below - vendoring avoids network fetches, not the need for
+# a new enough `go` binary to compile this module in the first place.
+export GOFLAGS = -mod=vendor
 
 VERSION := $(shell dpkg-parsechangelog -SVersion)
 COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)

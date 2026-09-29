@@ -1,5 +1,12 @@
 SHELL := /bin/sh
 
+# Dependencies are vendored (see vendor/, committed) so every build here
+# is network-free and reproducible; -mod=vendor makes that mandatory
+# rather than an implicit default, so a missing/stale vendor/ fails loudly
+# instead of silently falling back to the network. Re-run `go mod vendor`
+# after any go.mod change.
+export GOFLAGS := -mod=vendor
+
 # ---- metadata baked into the binary (see `koserver version`) ----
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
