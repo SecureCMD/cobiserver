@@ -1,0 +1,4 @@
+# Go binaries are statically linked by design (here further ensured by
+# CGO_ENABLED=0 and a pure-Go SQLite driver, so there isn't even libc to
+# dynamically link against). This is expected, not an oversight.
+koserver: statically-linked-binary

@@ -1,0 +1,54 @@
+[Unit]
+Description=cobiserver - KOReader-compatible sync server
+Documentation=https://github.com/SecureCMD/cobiserver
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=koserver
+Group=koserver
+UMask=0027
+WorkingDirectory=/var/lib/koserver
+EnvironmentFile=-/etc/koserver/koserver.env
+ExecStart=/usr/bin/koserver serve
+Restart=on-failure
+RestartSec=5s
+
+# --- filesystem sandboxing ---
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/koserver
+PrivateTmp=true
+
+# --- privilege / capability sandboxing ---
+# koserver binds to a port >1024 by default (LISTEN_ADDR=:8080), so it
+# needs no capabilities. If you set LISTEN_ADDR to a privileged port
+# (<1024) instead of putting a reverse proxy in front, add:
+#   AmbientCapabilities=CAP_NET_BIND_SERVICE
+#   CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+# and remove the two empty assignments below.
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=true
+
+# --- misc hardening ---
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectProc=invisible
+ProcSubset=pid
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RemoveIPC=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+
+export CGO_ENABLED = 0
+# Go >=1.21 auto-fetches the toolchain go.mod asks for (GOTOOLCHAIN=auto)
+# if the system golang-go is older than go.mod's `go 1.23`, provided the
+# build has network access. For a fully offline/reproducible build (e.g.
+# sbuild without network), run `go mod vendor` first and add
+# GOFLAGS=-mod=vendor here.
+export GOFLAGS =
+
+VERSION := $(shell dpkg-parsechangelog -SVersion)
+COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
+DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)
+
+%:
+	dh $@ --with installsysusers
+
+override_dh_auto_build:
+	go build -trimpath -ldflags "$(LDFLAGS)" -o bin/koserver ./cmd/koserver
+
+override_dh_auto_test:
+	go test ./...
+
+override_dh_auto_install:
+	install -Dm0755 bin/koserver debian/koserver/usr/bin/koserver
+	install -Dm0640 packaging/systemd/koserver.env.example debian/koserver/etc/koserver/koserver.env
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf bin

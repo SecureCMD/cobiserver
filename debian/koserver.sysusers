@@ -1,0 +1,2 @@
+#Type Name     ID   GECOS                              Home directory       Shell
+u     koserver -    "cobiserver KOReader sync service" /var/lib/koserver    -

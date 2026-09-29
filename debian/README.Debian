@@ -1,0 +1,23 @@
+koserver for Debian
+====================
+
+This package installs the koserver binary, a systemd unit, and a
+dedicated unprivileged "koserver" system user (created declaratively via
+systemd-sysusers) with its state directory /var/lib/koserver (created via
+systemd-tmpfiles). Nothing is started automatically on install, since the
+defaults probably need a look first:
+
+  1. Edit /etc/koserver/koserver.env (BASE_URL at minimum; it's a
+     conffile, so dpkg won't clobber your edits on upgrade).
+  2. systemctl enable --now koserver
+  3. journalctl -u koserver -f
+
+See /usr/share/doc/koserver/README.md for the full configuration
+reference, the KOReader-side setup, and password-recovery options.
+
+`apt remove koserver` keeps both your config (/etc/koserver/koserver.env)
+and your data (/var/lib/koserver, the SQLite database). `apt purge
+koserver` additionally deletes the config, as usual for a dpkg conffile —
+but it still leaves /var/lib/koserver and the "koserver" system user
+alone, so a purge can never silently destroy your reading-progress
+database; remove those two by hand if you actually want a clean slate.

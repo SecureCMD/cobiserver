@@ -36,7 +36,7 @@ SERVICE_USER     ?= koserver
 SUDO := $(shell [ "$$(id -u)" != "0" ] && command -v sudo || true)
 
 .PHONY: help build run test vet fmt fmt-check lint clean \
-	dist release checksums \
+	dist release checksums deb \
 	docker-build docker-buildx docker-run \
 	install uninstall systemd-reload
 
@@ -98,6 +98,11 @@ checksums: ## Regenerate dist/SHA256SUMS for everything currently in dist/
 	@echo "wrote $(DIST_DIR)/SHA256SUMS"
 
 release: dist ## Alias for `dist`
+
+# ---- Debian package ----
+
+deb: ## Build a .deb (needs: dpkg-dev debhelper golang-go git); output lands one directory up
+	dpkg-buildpackage -us -uc -b
 
 # ---- Docker ----
 

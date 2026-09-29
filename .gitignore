@@ -6,3 +6,15 @@
 *.db-shm
 *.db-wal
 .env
+
+# dpkg-buildpackage / debhelper build output (see `make deb`)
+/debian/.debhelper/
+/debian/koserver/
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.substvars
+/debian/*.debhelper.log
+/debian/*.log
+/*.deb
+/*.buildinfo
+/*.changes

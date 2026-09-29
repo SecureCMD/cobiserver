@@ -30,8 +30,9 @@ one without an admin having to touch the database.
   image, runs as a non-root user.
 - Admin CLI baked into the same binary (`koserver create-user`, `set-password`,
   `list-users`, `delete-user`, `make-admin`, `gen-reset-link`).
-- Deploy as a container (Docker Compose) or natively as a hardened
-  systemd service (`make install`) — your choice.
+- Deploy as a container (Docker Compose), natively as a hardened systemd
+  service (`make install`), or as a proper `.deb` (`make deb`) — your
+  choice.
 - `Makefile` cross-compiles to any Go-supported OS/architecture with no
   extra toolchain (`make build GOOS=linux GOARCH=arm64`), and
   `make dist` cuts release archives for common self-hosting targets
@@ -127,6 +128,35 @@ fairly aggressively (`ProtectSystem=strict`, no capabilities, private
 `/var/lib/koserver`. If you point `LISTEN_ADDR` at a privileged port
 (<1024) instead of putting a reverse proxy in front, you'll need to grant
 `CAP_NET_BIND_SERVICE`; see the comment in that file.
+
+### Or: as a .deb package
+
+For Debian/Ubuntu hosts, `debian/` is a standard debhelper (compat 13)
+packaging directory — build it and install with `dpkg`/`apt` instead of
+`make install`, and it does the same setup (dedicated system user via
+`systemd-sysusers`, `/var/lib/koserver` via `systemd-tmpfiles`, the
+systemd unit) declaratively, tracked by dpkg so `apt remove`/`purge`
+clean up properly:
+
+```sh
+sudo apt install build-essential debhelper devscripts dpkg-dev golang-go git
+make deb                       # → ../koserver_<version>_<arch>.deb
+sudo apt install ../koserver_*.deb
+```
+
+Note: Debian 12 (bookworm)'s `golang-go` is 1.19, older than this
+project's `go 1.23` requirement, and Go's automatic-toolchain-download
+(`GOTOOLCHAIN=auto`) only exists from Go 1.21 onward — so a stock
+bookworm `golang-go` can neither build this nor bootstrap a newer
+toolchain itself. Install Go 1.23+ some other way first (backports,
+Debian trixie, or the upstream tarball from go.dev/dl) and it works fine
+either as `golang-go` or just a `go` on `$PATH`; `dpkg-buildpackage -d`
+skips the apt-dependency version check if you've done the latter.
+
+`apt remove koserver` keeps your config and data. `apt purge koserver`
+also deletes `/etc/koserver/koserver.env` (it's a normal dpkg conffile)
+but, deliberately, still leaves `/var/lib/koserver` (your database) and
+the `koserver` system user alone — see `debian/README.Debian`.
 
 After editing the unit file directly, `sudo make systemd-reload` reloads
 and restarts it. `sudo make uninstall` removes the service and binary

@@ -1,0 +1,29 @@
+Source: koserver
+Section: web
+Priority: optional
+Maintainer: NachE <nache.nache@gmail.com>
+Build-Depends: debhelper-compat (= 13), golang-go (>= 2:1.23~), git
+Standards-Version: 4.6.2
+Homepage: https://github.com/SecureCMD/cobiserver
+Rules-Requires-Root: no
+
+Package: koserver
+Architecture: any
+# No ${shlibs:Depends}: the binary is a statically linked Go build
+# (CGO_ENABLED=0, pure-Go SQLite driver), so it has no dynamic library
+# dependencies for dh_shlibdeps to compute.
+Depends: ${misc:Depends}
+Description: self-hosted, wire-compatible KOReader sync server
+ koserver is a drop-in replacement for the official KOReader sync
+ server (sync.koreader.rocks): it implements the same register/auth/
+ progress-push-pull API, so the KOReader app can point at it without
+ any change in behavior.
+ .
+ On top of that it adds a self-service web UI (account creation,
+ password change, password recovery), an admin panel, and an admin
+ CLI baked into the same binary. Data is stored in a local SQLite
+ database.
+ .
+ This package installs koserver as a systemd service running under
+ its own unprivileged system user; see /etc/koserver/koserver.env for
+ configuration.
