@@ -1,4 +1,6 @@
 /koserver
+/bin/
+/dist/
 /data/
 *.db
 *.db-shm

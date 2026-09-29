@@ -24,6 +24,15 @@ import (
 	"cobiserver/internal/web"
 )
 
+// version, commit and date are set at build time via -ldflags, see the
+// Makefile's LDFLAGS. They default to these placeholders for `go run` /
+// unversioned builds.
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
 	if len(os.Args) < 2 {
 		runServe()
@@ -46,10 +55,14 @@ func main() {
 		runMakeAdmin(false)
 	case "gen-reset-link":
 		runGenResetLink()
+	case "version", "-v", "--version":
+		fmt.Printf("koserver %s (commit %s, built %s)\n", version, commit, date)
 	case "-h", "--help", "help":
 		printUsage()
 	default:
-		runServe()
+		fmt.Fprintf(os.Stderr, "koserver: unknown command %q\n\n", os.Args[1])
+		printUsage()
+		os.Exit(2)
 	}
 }
 
@@ -65,6 +78,7 @@ Usage:
   koserver make-admin -username U
   koserver revoke-admin -username U
   koserver gen-reset-link -username U
+  koserver version
 
 Configuration is read from environment variables; see README.md.`)
 }

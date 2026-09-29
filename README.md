@@ -30,6 +30,12 @@ one without an admin having to touch the database.
   image, runs as a non-root user.
 - Admin CLI baked into the same binary (`koserver create-user`, `set-password`,
   `list-users`, `delete-user`, `make-admin`, `gen-reset-link`).
+- Deploy as a container (Docker Compose) or natively as a hardened
+  systemd service (`make install`) — your choice.
+- `Makefile` cross-compiles to any Go-supported OS/architecture with no
+  extra toolchain (`make build GOOS=linux GOARCH=arm64`), and
+  `make dist` cuts release archives for common self-hosting targets
+  (amd64, arm64, armv7) in one shot.
 
 ## Quick start (Docker Compose)
 
@@ -82,6 +88,51 @@ KOReader app itself is fine talking to a plain-HTTP server on your LAN if
 you don't want to bother with TLS, but any web UI login without HTTPS
 sends the password in the clear over the network.
 
+## Running as a systemd service (no Docker)
+
+If you'd rather run the plain binary on a Linux box than a container,
+`make install` builds it, installs it, and wires up a hardened systemd
+unit in one go. Run this **on the target server**, not on your dev
+machine:
+
+```sh
+git clone https://github.com/SecureCMD/cobiserver.git
+cd cobiserver
+sudo make install
+```
+
+That:
+
+- builds `koserver` for the host's architecture and installs it to
+  `/usr/local/bin/koserver`;
+- creates a dedicated, unprivileged `koserver` system user/group;
+- creates `/var/lib/koserver` (the default `DATA_DIR`, owned by that user)
+  and `/etc/koserver/koserver.env` (from
+  `packaging/systemd/koserver.env.example`, only if it doesn't already
+  exist — re-running `make install` never clobbers your config);
+- installs `packaging/systemd/koserver.service` to
+  `/etc/systemd/system/` and runs `systemctl daemon-reload`.
+
+Then:
+
+```sh
+sudo $EDITOR /etc/koserver/koserver.env   # BASE_URL, ALLOW_SIGNUP, SMTP_*, ...
+sudo systemctl enable --now koserver
+journalctl -u koserver -f
+```
+
+The unit (`packaging/systemd/koserver.service`) sandboxes the process
+fairly aggressively (`ProtectSystem=strict`, no capabilities, private
+`/tmp`, restricted syscalls, etc.) — it can only read/write
+`/var/lib/koserver`. If you point `LISTEN_ADDR` at a privileged port
+(<1024) instead of putting a reverse proxy in front, you'll need to grant
+`CAP_NET_BIND_SERVICE`; see the comment in that file.
+
+After editing the unit file directly, `sudo make systemd-reload` reloads
+and restarts it. `sudo make uninstall` removes the service and binary
+(your data in `/var/lib/koserver` and config in `/etc/koserver` are left
+alone — delete those yourself if you want a clean slate).
+
 ## Recovering / changing a password
 
 Three ways, from easiest to "admin has to help":
@@ -118,9 +169,11 @@ koserver delete-user -username U
 koserver make-admin -username U
 koserver revoke-admin -username U
 koserver gen-reset-link -username U
+koserver version
 ```
 
-Through Docker Compose, prefix with `docker compose exec koserver`.
+Through Docker Compose, prefix with `docker compose exec koserver`; under
+systemd it's just `koserver <command>` (it's on `$PATH`).
 
 ## API compatibility
 
@@ -137,14 +190,49 @@ KOReader source:
 
 ## Building from source
 
-Requires Go 1.23+; no CGO, no external services needed besides SQLite
-which is pure Go here.
+Requires Go 1.23+; no CGO, no external services needed (the SQLite driver
+is pure Go), which also means cross-compiling for any target just works —
+there's no C toolchain to cross-install.
 
 ```sh
-go build -o koserver ./cmd/koserver
+make help          # list every target
+make build          # build for the host's OS/arch, into bin/koserver
+make test           # go test ./...
+make lint           # gofmt -l + go vet
 ```
 
-Or just build the Docker image directly with `docker build -t koserver .`.
+### Cross-compiling for a specific architecture
+
+```sh
+make build GOOS=linux GOARCH=arm64          # e.g. a Raspberry Pi (64-bit) or AWS Graviton
+make build GOOS=linux GOARCH=arm GOARM=7    # 32-bit Raspberry Pi
+make build GOOS=linux GOARCH=amd64          # a regular x86_64 server
+```
+
+`GOOS`/`GOARCH` (and `GOARM` for 32-bit ARM) are any pair Go itself
+supports — run `go tool dist list` for the full list.
+
+### Building release archives for every supported platform at once
+
+```sh
+make dist    # or `make release`
+```
+
+Cross-compiles `linux/amd64`, `linux/arm64`, `linux/arm/v7` and
+`darwin/arm64` into `dist/*.tar.gz`, plus `dist/SHA256SUMS`. Edit
+`DIST_PLATFORMS` in the `Makefile` to add or drop targets.
+
+### Docker
+
+```sh
+make docker-build              # single image for the host's architecture
+make docker-buildx PUSH=1      # multi-arch (linux/amd64+linux/arm64) via buildx, pushed to $(IMAGE)
+```
+
+`docker-buildx` needs the `buildx` plugin (bundled with recent Docker
+Desktop; on plain `docker` installs you may need `docker buildx install`
+or the `docker-buildx-plugin` package) and, to push, that you're logged in
+(`docker login`) and `IMAGE` set to a registry you can write to.
 
 ## On concurrency (SQLite)
 
