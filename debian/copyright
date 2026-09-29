@@ -2,6 +2,16 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: koserver
 Upstream-Contact: NachE <nache.nache@gmail.com>
 Source: https://github.com/SecureCMD/cobiserver
+Comment:
+ usr/bin/koserver is a statically linked Go binary (CGO_ENABLED=0). Besides
+ this project's own code (below), it links the Go modules listed further
+ down, none of which are vendored into this source package: they are
+ fetched over the network at build time via `go mod download`/`go build`,
+ pinned by go.sum, and their license terms apply to the portions of the
+ binary they contribute. Import paths are given as Files: for
+ identification, matching `go.sum` and the module list `go version -m
+ usr/bin/koserver` reports; they do not refer to paths actually present in
+ this source package.
 
 Files: *
 Copyright: 2026 Secure Code Metadynamics SL and Juan Antonio Nache Ramos
@@ -10,6 +20,64 @@ License: MIT
 Files: debian/*
 Copyright: 2026 Secure Code Metadynamics SL and Juan Antonio Nache Ramos
 License: MIT
+
+Files: github.com/dustin/go-humanize
+Copyright: 2005-2008 Dustin Sallings <dustin@spy.net>
+License: MIT
+Comment: go.sum pins v1.0.1.
+
+Files: github.com/google/uuid
+Copyright: 2009, 2014 Google Inc.
+License: BSD-3-Clause
+Comment: go.sum pins v1.6.0.
+
+Files: github.com/remyoudompheng/bigfft
+Copyright: 2012 The Go Authors.
+License: BSD-3-Clause
+Comment: go.sum pins v0.0.0-20230129092748-24d4a6f8daec.
+
+Files: golang.org/x/crypto
+Copyright: 2009 The Go Authors.
+License: BSD-3-Clause
+Comment: go.sum pins v0.31.0.
+
+Files: golang.org/x/sys
+Copyright: 2009 The Go Authors.
+License: BSD-3-Clause
+Comment: go.sum pins v0.28.0.
+
+Files: modernc.org/mathutil
+Copyright: 2014 The mathutil Authors.
+License: BSD-3-Clause
+Comment: go.sum pins v1.6.0.
+
+Files: modernc.org/memory
+Copyright: 2017 The Memory Authors.
+License: BSD-3-Clause
+Comment:
+ go.sum pins v1.8.0. This module's own LICENSE is BSD-3-Clause (above).
+ It additionally embeds a BSD-3-Clause-licensed mmap helper adapted from
+ the Go standard library (Copyright 2009 The Go Authors) and from
+ github.com/edsrzf/mmap-go (Copyright (c) 2011 Evan Shaw
+ <edsrzf@gmail.com>); see its LICENSE-GO and LICENSE-MMAP-GO files.
+
+Files: modernc.org/libc
+Copyright: 2017 The Libc Authors.
+License: BSD-3-Clause
+Comment:
+ go.sum pins v1.55.3. This module's own LICENSE is BSD-3-Clause (above).
+ It additionally embeds BSD-3-Clause-licensed code from the Go standard
+ library (Copyright 2009 The Go Authors); see its LICENSE-GO file.
+
+Files: modernc.org/sqlite
+Copyright: 2017 The Sqlite Authors.
+License: BSD-3-Clause
+Comment:
+ go.sum pins v1.34.4. modernc.org/sqlite is a CGO-free transpilation of
+ the public-domain SQLite C amalgamation
+ (https://sqlite.org/copyright.html); the transpiled Go source carries
+ this BSD-3-Clause license from its authors, on top of upstream SQLite's
+ own public-domain status.
 
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,3 +98,31 @@ License: MIT
  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+License: BSD-3-Clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ .
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ .
+ 3. Neither the name of the copyright holder nor the names of its
+ contributors may be used to endorse or promote products derived from
+ this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
